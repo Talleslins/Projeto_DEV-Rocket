@@ -4,3 +4,11 @@ export interface Movie {
   ano_lancamento: number | null;
   url_poster: string | null;
 }
+
+export interface MovieDetail extends Movie {
+  sinopse: string | null;
+  duracao_minutos: number | null;
+  status_filme: string | null;
+  data_lancamento: string | null;
+  url_backdrop: string | null;
+}
