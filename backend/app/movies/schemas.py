@@ -19,5 +19,20 @@ class MovieDetailResponse(BaseModel):
     ano_lancamento: int | None = None
     url_poster: str | None = None
     url_backdrop: str | None = None
+    nota_media_base: float | None = None
+    qtd_avaliacoes_base: int | None = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class ReviewBase(BaseModel):
+     rating: float
+     review_text: str | None = None
+
+class ReviewCreate(ReviewBase):
+    pass
+
+class ReviewResponse(ReviewBase):
+    id: int | str | None = None
+    sk_movie_id: str
 
     model_config = ConfigDict(from_attributes=True)

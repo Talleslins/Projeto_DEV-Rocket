@@ -3,7 +3,7 @@
 O domínio foi organizado como esquema estrela para suportar consultas
 analíticas, mantendo relações de navegação úteis para a futura API.
 """
-
+from sqlalchemy import Column, String, Integer, Float, ForeignKey
 from datetime import date, datetime
 from decimal import Decimal
 from hashlib import sha256
@@ -244,3 +244,11 @@ class DimReview(Base):
     nota_media_usuarios: Mapped[float | None] = mapped_column(Double, default=None)
 
     movie: Mapped[DimMovie] = relationship(back_populates="reviews_summary")
+
+class UserReview(Base):
+    __tablename__ = "user_reviews"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    sk_movie_id = Column(String, ForeignKey("dim_movies.sk_movie_id"))
+    rating = Column(Float)
+    review_text = Column(String)

@@ -11,4 +11,18 @@ export interface MovieDetail extends Movie {
   status_filme: string | null;
   data_lancamento: string | null;
   url_backdrop: string | null;
+  nota_media_base?: number;
+  qtd_avaliacoes_base?: number;
+}
+
+export interface Review {
+  id?: number | string;
+  sk_movie_id: string;
+  rating: number;
+  review_text: string | null;
+}
+
+export interface ReviewCreate {
+  rating: number;
+  review_text: string;
 }

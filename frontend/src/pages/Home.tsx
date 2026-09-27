@@ -5,66 +5,83 @@ import type { Movie } from '../types/movie';
 
 function Home() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [page, setPage] = useState(1);
+  const [skip, setSkip] = useState(0);
   const limit = 20;
+  
+  // Estados para a barra de pesquisa
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    const skip = (page - 1) * limit;
-    
-    getMovies(skip, limit)
-      .then(data => setMovies(data))
-      .catch(error => console.error(error));
-  }, [page]);
+    //passa o searchTerm para a API
+    getMovies(skip, limit, searchTerm).then(data => setMovies(data));
+  }, [skip, searchTerm]);
 
-  const handleNext = () => setPage(prev => prev + 1);
-  const handlePrev = () => setPage(prev => Math.max(prev - 1, 1));
+  const handleNext = () => setSkip(prev => prev + limit);
+  const handlePrev = () => setSkip(prev => Math.max(0, prev - limit));
+
+  // Função disparada ao submeter a pesquisa
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setSkip(0); // Volta para a página 1 ao pesquisar
+  };
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
-      <h1>Catálogo de Filmes</h1>
-      
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-        {movies.map((movie) => (
-          <Link 
-            to={`/movie/${movie.sk_movie_id}`} 
-            key={movie.sk_movie_id} 
-            style={{ textDecoration: 'none', color: 'inherit', border: '1px solid #ddd', borderRadius: '8px', padding: '1rem', display: 'flex', flexDirection: 'column', transition: 'transform 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            {movie.url_poster ? (
-              <img src={movie.url_poster} alt={`Pôster de ${movie.titulo}`} style={{ width: '100%', borderRadius: '4px', marginBottom: '1rem' }} />
-            ) : (
-              <div style={{ width: '100%', height: '300px', backgroundColor: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                Sem Imagem
-              </div>
-            )}
-            <h3 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem 0' }}>{movie.titulo}</h3>
-            <p style={{ color: '#666', margin: 'auto 0 0 0' }}>{movie.ano_lancamento || 'Ano desconhecido'}</p>
-          </Link>
-        ))}
-      </div>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem', fontFamily: 'sans-serif' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Catálogo de Filmes</h1>
 
-      {/* Controlos de Paginação */}
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-        <button 
-          onClick={handlePrev} 
-          disabled={page === 1}
-          style={{ padding: '0.5rem 1rem', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
-        >
+      {/* Barra de Pesquisa */}
+      <form onSubmit={handleSearch} style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem', gap: '0.5rem' }}>
+        <input 
+          type="text" 
+          placeholder="Procure por um filme..." 
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          style={{ padding: '0.75rem', width: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+        />
+        <button type="submit" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+          Pesquisar
+        </button>
+      </form>
+
+      {/* Navegação / Paginação */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', alignItems: 'center' }}>
+        <button onClick={handlePrev} disabled={skip === 0} style={{ padding: '0.5rem 1rem', cursor: skip === 0 ? 'not-allowed' : 'pointer' }}>
           Anterior
         </button>
-        
-        <span style={{ fontWeight: 'bold' }}>Página {page}</span>
-        
-        <button 
-          onClick={handleNext} 
-          disabled={movies.length < limit}
-          style={{ padding: '0.5rem 1rem', cursor: movies.length < limit ? 'not-allowed' : 'pointer' }}
-        >
+        <span style={{ fontWeight: 'bold' }}>Página {(skip / limit) + 1}</span>
+        <button onClick={handleNext} disabled={movies.length < limit} style={{ padding: '0.5rem 1rem', cursor: movies.length < limit ? 'not-allowed' : 'pointer' }}>
           Próximo
         </button>
       </div>
+
+      {/* Grelha de Filmes */}
+      {movies.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#666' }}>Nenhum filme encontrado para "{searchTerm}".</p>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '2rem' }}>
+          {movies.map(movie => (
+            <Link to={`/movie/${movie.sk_movie_id}`} key={movie.sk_movie_id} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <div style={{ border: '1px solid #eee', borderRadius: '8px', overflow: 'hidden', transition: 'transform 0.2s', cursor: 'pointer' }} 
+                   onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                   onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}>
+                {movie.url_poster ? (
+                  <img src={movie.url_poster} alt={movie.titulo} style={{ width: '100%', height: '300px', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '300px', backgroundColor: '#ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    Sem Imagem
+                  </div>
+                )}
+                <div style={{ padding: '1rem' }}>
+                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem' }}>{movie.titulo}</h3>
+                  <p style={{ margin: 0, color: '#666' }}>{movie.ano_lancamento}</p>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
