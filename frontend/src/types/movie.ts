@@ -26,3 +26,16 @@ export interface ReviewCreate {
   rating: number;
   review_text: string;
 }
+
+export interface MovieCreate {
+  titulo: string;
+  sinopse?: string | null;
+  duracao_minutos?: number | null;
+  status_filme?: string | null;
+  data_lancamento?: string | null;
+  ano_lancamento?: number | null;
+  url_poster?: string | null;
+  url_backdrop?: string | null;
+}
+
+export type MovieUpdate = Partial<MovieCreate>;

@@ -1,4 +1,4 @@
-import type { Movie, MovieDetail, Review, ReviewCreate } from '../types/movie';
+import type { Movie, MovieDetail, Review, ReviewCreate, MovieCreate, MovieUpdate } from '../types/movie';
 
 const API_URL = 'http://localhost:8000/api/v1';
 
@@ -47,3 +47,30 @@ export const createMovieReview = async (id: string, review: ReviewCreate): Promi
   }
   return response.json();
 };3
+
+export const createMovie = async (movie: MovieCreate): Promise<MovieDetail> => {
+  const response = await fetch(`${API_URL}/movies/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(movie),
+  });
+  if (!response.ok) throw new Error('Falha ao criar o filme');
+  return response.json();
+};
+
+export const updateMovie = async (id: string, movie: MovieUpdate): Promise<MovieDetail> => {
+  const response = await fetch(`${API_URL}/movies/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(movie),
+  });
+  if (!response.ok) throw new Error('Falha ao atualizar o filme');
+  return response.json();
+};
+
+export const deleteMovie = async (id: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/movies/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) throw new Error('Falha ao apagar o filme');
+};

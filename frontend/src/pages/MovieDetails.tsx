@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { getMovieDetails, getMovieReviews, createMovieReview } from '../services/api';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { getMovieDetails, getMovieReviews, createMovieReview, deleteMovie } from '../services/api';
 import type { MovieDetail, Review } from '../types/movie';
 
 function MovieDetails() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate(); // Hook para redirecionar o utilizador
+  
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +48,24 @@ function MovieDetails() {
     }
   };
 
-  // Cálculo da média combinada (Base antiga ponderada + Novas)
+  // Função para apagar o filme
+  const handleDeleteMovie = async () => {
+    if (!id) return;
+    
+    // Pede confirmação antes de apagar
+    const confirmDelete = window.confirm("Tem a certeza que deseja apagar este filme? Esta ação não pode ser desfeita.");
+    
+    if (confirmDelete) {
+      try {
+        await deleteMovie(id);
+        alert("Filme apagado com sucesso!");
+        navigate('/'); // Redireciona para o catálogo (Home)
+      } catch (error) {
+        alert("Erro ao apagar o filme. Tente novamente.");
+      }
+    }
+  };
+
   const qtdAntiga = movie?.qtd_avaliacoes_base || 0;
   const mediaAntiga = movie?.nota_media_base || 0;
   const somaAntiga = qtdAntiga * mediaAntiga;
@@ -90,9 +109,21 @@ function MovieDetails() {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '40px auto 0', padding: '2rem' }}>
-        <Link to="/" style={{ display: 'inline-block', marginBottom: '2rem', color: '#007bff', textDecoration: 'none', fontWeight: 'bold' }}>
-          &larr; Voltar ao Catálogo
-        </Link>
+        
+        {/* Barra de Navegação e Ações */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <Link to="/" style={{ color: '#007bff', textDecoration: 'none', fontWeight: 'bold' }}>
+            &larr; Voltar ao Catálogo
+          </Link>
+          
+          {/* Botão de Apagar Filme */}
+          <button 
+            onClick={handleDeleteMovie} 
+            style={{ padding: '0.5rem 1rem', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            Apagar Filme
+          </button>
+        </div>
         
         <div style={{ marginLeft: movie.url_poster ? '232px' : '0', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
           <section>

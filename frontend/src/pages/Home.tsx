@@ -32,19 +32,26 @@ function Home() {
       <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>Catálogo de Filmes</h1>
 
       {/* Barra de Pesquisa */}
-      <form onSubmit={handleSearch} style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem', gap: '0.5rem' }}>
-        <input 
-          type="text" 
-          placeholder="Procure por um filme..." 
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          style={{ padding: '0.75rem', width: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
-        />
-        <button type="submit" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-          Pesquisar
-        </button>
-      </form>
+      {/* Barra de Ações (Pesquisa e Novo Filme) */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '0.5rem' }}>
+          <input 
+            type="text" 
+            placeholder="Procure por um filme..." 
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            style={{ padding: '0.75rem', width: '300px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+          <button type="submit" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
+            Pesquisar
+          </button>
+        </form>
 
+        <Link to="/novo-filme" style={{ padding: '0.75rem 1.5rem', backgroundColor: '#28a745', color: 'white', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
+          + Adicionar Filme
+        </Link>
+      </div>
+      
       {/* Navegação / Paginação */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '2rem', alignItems: 'center' }}>
         <button onClick={handlePrev} disabled={skip === 0} style={{ padding: '0.5rem 1rem', cursor: skip === 0 ? 'not-allowed' : 'pointer' }}>

@@ -1,10 +1,12 @@
-﻿from app.movies.models import UserReview
-from fastapi import APIRouter, Depends, HTTPException
+﻿import uuid
+from app.movies.models import UserReview
+from fastapi import APIRouter, Depends, HTTPException , status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy import delete
 from app.db.session import get_db
 from app.movies.models import DimMovie, DimReview
-from app.movies.schemas import MovieListResponse, MovieDetailResponse, ReviewResponse, ReviewCreate
+from app.movies.schemas import MovieListResponse, MovieDetailResponse, ReviewResponse, ReviewCreate, MovieCreate , MovieUpdate
 router = APIRouter()
 
 @router.get("/", response_model=list[MovieListResponse])
@@ -81,3 +83,73 @@ async def create_movie_review(
     await db.refresh(new_review)
     
     return new_review
+# --- ROTAS DE GESTÃO DE FILMES (CRUD) ---
+
+@router.post("/", response_model=MovieDetailResponse, status_code=status.HTTP_201_CREATED)
+async def create_movie(movie: MovieCreate, db: AsyncSession = Depends(get_db)):
+    # Gera um ID único para o novo filme
+    novo_id = str(uuid.uuid4())
+    
+    novo_filme = DimMovie(
+        sk_movie_id=novo_id,
+        id_filme=int(uuid.uuid4().int % 1000000), # ID numérico fictício
+        **movie.model_dump()
+    )
+    db.add(novo_filme)
+    await db.commit()
+    await db.refresh(novo_filme)
+    
+    # Formata a resposta com as estatísticas zeradas
+    movie_data = novo_filme.__dict__.copy()
+    movie_data["nota_media_base"] = 0.0
+    movie_data["qtd_avaliacoes_base"] = 0
+    return movie_data
+
+@router.put("/{sk_movie_id}", response_model=MovieDetailResponse)
+async def update_movie(sk_movie_id: str, movie_update: MovieUpdate, db: AsyncSession = Depends(get_db)):
+    query = select(DimMovie).where(DimMovie.sk_movie_id == sk_movie_id)
+    result = await db.execute(query)
+    movie = result.scalars().first()
+
+    if not movie:
+        raise HTTPException(status_code=404, detail="Filme não encontrado")
+
+    # Atualiza apenas os campos enviados
+    update_data = movie_update.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(movie, key, value)
+
+    await db.commit()
+    await db.refresh(movie)
+    
+    # Mantém as estatísticas antigas na resposta
+    stats_query = select(DimReview).where(DimReview.sk_movie_id == sk_movie_id)
+    stats_result = await db.execute(stats_query)
+    stats = stats_result.scalars().first()
+    
+    movie_data = movie.__dict__.copy()
+    movie_data["nota_media_base"] = stats.nota_media_usuarios if stats else 0.0
+    movie_data["qtd_avaliacoes_base"] = stats.qtd_avaliacoes_usuarios if stats else 0
+    
+    return movie_data
+
+@router.delete("/{sk_movie_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(sk_movie_id: str, db: AsyncSession = Depends(get_db)):
+    query = select(DimMovie).where(DimMovie.sk_movie_id == sk_movie_id)
+    result = await db.execute(query)
+    movie = result.scalars().first()
+
+    if not movie:
+        raise HTTPException(status_code=404, detail="Filme não encontrado")
+
+    # 1. Apaga as resenhas do utilizador
+    await db.execute(delete(UserReview).where(UserReview.sk_movie_id == sk_movie_id))
+    
+    # 2. Apaga as estatísticas antigas
+    await db.execute(delete(DimReview).where(DimReview.sk_movie_id == sk_movie_id))
+
+    # 3.apaga o filme
+    await db.delete(movie)
+    await db.commit()
+    
+    return None
