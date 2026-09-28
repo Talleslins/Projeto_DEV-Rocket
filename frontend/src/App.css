@@ -1,3 +1,20 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0f172a; /* Fundo escuro moderno */
+  color: #f8fafc; /* Texto quase branco para contraste */
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Um pequeno toque de animação para os links e botões */
+button, a {
+  transition: all 0.2s ease-in-out;
+}
+button:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
 .counter {
   font-size: 16px;
   padding: 5px 10px;

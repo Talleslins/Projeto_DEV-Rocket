@@ -3,7 +3,7 @@ from app.movies.models import UserReview
 from fastapi import APIRouter, Depends, HTTPException , status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 from app.db.session import get_db
 from app.movies.models import DimMovie, DimReview
 from app.movies.schemas import MovieListResponse, MovieDetailResponse, ReviewResponse, ReviewCreate, MovieCreate , MovieUpdate
@@ -142,13 +142,29 @@ async def delete_movie(sk_movie_id: str, db: AsyncSession = Depends(get_db)):
     if not movie:
         raise HTTPException(status_code=404, detail="Filme não encontrado")
 
-    # 1. Apaga as resenhas do utilizador
-    await db.execute(delete(UserReview).where(UserReview.sk_movie_id == sk_movie_id))
+    # Lista de todas as tabelas que podem ter dependências (chaves estrangeiras) do filme
+    tabelas_dependentes = [
+        "user_reviews", 
+        "dim_reviews", 
+        "fact_movies_performance",
+        "bridge_movie_genre",
+        "bridge_movie_company",
+        "bridge_movie_person",
+        "movie_reviews"
+    ]
     
-    # 2. Apaga as estatísticas antigas
-    await db.execute(delete(DimReview).where(DimReview.sk_movie_id == sk_movie_id))
+    # Executa a limpeza em cascata em todas elas usando SQL direto
+    for tabela in tabelas_dependentes:
+        try:
+            await db.execute(
+                text(f"DELETE FROM {tabela} WHERE sk_movie_id = :id"), 
+                {"id": sk_movie_id}
+            )
+        except Exception:
+            # Se a tabela não existir, avança silenciosamente
+            pass
 
-    # 3.apaga o filme
+    # Com o caminho finalmente livre de amarras, apaga o filme original!
     await db.delete(movie)
     await db.commit()
     
